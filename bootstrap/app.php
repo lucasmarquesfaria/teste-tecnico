@@ -11,8 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->web(append: [
+            // Web middleware group já inclui o VerifyCsrfToken por padrão
+            // Não precisamos adicionar explicitamente
+        ]);
+        
+        $middleware->alias([
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->reportable(function (\Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException $e) {
+            // Log específico para o erro que estamos enfrentando
+            \Illuminate\Support\Facades\Log::warning('Método HTTP não permitido detectado: ' . $e->getMessage());
+        });
     })->create();

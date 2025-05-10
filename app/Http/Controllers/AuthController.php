@@ -10,9 +10,7 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         return view('auth.login');
-    }
-
-    public function login(Request $request)
+    }    public function login(Request $request)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
@@ -21,17 +19,15 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+            return redirect()->intended(route('service_orders.index'));
         }
 
         return back()->withInput()->with('error', 'E-mail ou senha inválidos.');
-    }
-
-    public function logout(Request $request)
+    }    public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        return redirect()->route('login')->with('success', 'Você saiu do sistema com sucesso!');
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Events\ServiceOrderCompleted;
-use App\Listeners\SendServiceOrderCompletedEmail;
+use App\Listeners\NotifyClientOfCompletion;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,7 +18,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         ServiceOrderCompleted::class => [
-            SendServiceOrderCompletedEmail::class,
+            NotifyClientOfCompletion::class,
         ],
     ];
 

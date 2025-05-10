@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Garantir que o método PUT seja processado corretamente
+        \Illuminate\Support\Facades\Route::resourceVerbs([
+            'create' => 'criar',
+            'edit' => 'editar',
+        ]);
     }
 }
