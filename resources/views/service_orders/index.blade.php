@@ -52,12 +52,12 @@
             @endif
         </div>
     </div>
-    <div class="bg-white shadow rounded-lg overflow-x-auto">
-        <table class="min-w-full text-sm">
+    <div class="bg-white shadow rounded-lg overflow-x-auto">        <table class="min-w-full text-sm">
             <thead class="bg-gray-100">
                 <tr>
                     <th class="px-4 py-2">Título</th>
                     <th class="px-4 py-2">Status</th>
+                    <th class="px-4 py-2">Data de Criação</th>
                     <th class="px-4 py-2">Cliente</th>
                     <th class="px-4 py-2">Técnico</th>
                     <th class="px-4 py-2">Ações</th>
@@ -75,6 +75,7 @@
                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                             </span>
                         </td>
+                        <td class="px-4 py-2">{{ $order->formatted_created_at }}</td>
                         <td class="px-4 py-2">{{ $order->client->name ?? '-' }}</td>
                         <td class="px-4 py-2">{{ $order->technician->name ?? '-' }}</td>                        <td class="px-4 py-2">
                             <div class="flex space-x-3">

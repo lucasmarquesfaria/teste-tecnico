@@ -35,32 +35,38 @@ class NotifyClientOfCompletion implements ShouldQueue
      *
      * @param  \App\Events\ServiceOrderCompleted  $event
      * @return void
-     */
-    public function handle(ServiceOrderCompleted $event): void
+     */    public function handle(ServiceOrderCompleted $event): void
     {
         $serviceOrder = $event->serviceOrder;
         
-        // Verificar se esta notificação já foi enviada (para evitar duplicações)
+        // Usar cache->remember para evitar race conditions e garantir que o email só seja enviado uma vez
         $cacheKey = 'order_completed_notification_' . $serviceOrder->id;
-        if (Cache::has($cacheKey)) {
-            Log::info('Notification for order #' . $serviceOrder->id . ' already sent. Skipping.');
-            return;
+        
+        // O método remember só executará o callback se a chave não existir no cache
+        $notificationSent = Cache::remember(
+            $cacheKey,
+            now()->addDays(1),  // Cache válido por 1 dia para maior segurança
+            function() use ($serviceOrder) {
+                // Carregar relacionamentos se ainda não estiverem carregados
+                if (!$serviceOrder->relationLoaded('client')) {
+                    $serviceOrder->load('client');
+                }
+                
+                if (!$serviceOrder->relationLoaded('technician')) {
+                    $serviceOrder->load('technician');
+                }
+                
+                // Enviar notificação ao cliente
+                Log::info('Enviando notificação para ordem #' . $serviceOrder->id . ' para o cliente: ' . $serviceOrder->client->email);
+                $serviceOrder->client->notify(new ServiceOrderCompletedNotification($serviceOrder));
+                
+                return now()->toDateTimeString(); // Armazena quando foi enviado
+            }
+        );
+        
+        // Se chegou aqui e o valor retornado não é do momento atual, significa que já existia no cache
+        if ($notificationSent !== now()->toDateTimeString()) {
+            Log::info('Notificação para ordem #' . $serviceOrder->id . ' já foi enviada em: ' . $notificationSent . '. Ignorando.');
         }
-        
-        // Carregar relacionamentos se ainda não estiverem carregados
-        if (!$serviceOrder->relationLoaded('client')) {
-            $serviceOrder->load('client');
-        }
-        
-        if (!$serviceOrder->relationLoaded('technician')) {
-            $serviceOrder->load('technician');
-        }
-        
-        // Enviar notificação ao cliente
-        Log::info('Enviando notificação para ordem #' . $serviceOrder->id . ' para o cliente: ' . $serviceOrder->client->email);
-        $serviceOrder->client->notify(new ServiceOrderCompletedNotification($serviceOrder));
-        
-        // Marcar como enviado (expira após 1 hora)
-        Cache::put($cacheKey, true, 3600);
     }
 }

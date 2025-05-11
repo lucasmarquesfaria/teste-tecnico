@@ -29,16 +29,15 @@ class ServiceOrderController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
-     */
-    public function index(Request $request)
+     */    public function index(Request $request)
     {
         $user = Auth::user();
         $query = null;
         
         if ($user->role === 'technician') {
-            $query = ServiceOrder::where('technician_id', $user->id)->with('client');
+            $query = ServiceOrder::orderedByLatest()->where('technician_id', $user->id)->with('client');
         } else {
-            $query = ServiceOrder::where('client_id', $user->id)->with('technician');
+            $query = ServiceOrder::orderedByLatest()->where('client_id', $user->id)->with('technician');
         }
         
         if ($request->has('status') && $request->status) {
@@ -51,17 +50,15 @@ class ServiceOrderController extends Controller
         
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('created_at', '<=', $request->date_to);
-        }
-        
-        if ($request->has('search') && $request->search) {
+        }        if ($request->has('search') && $request->search) {
             $search = '%' . $request->search . '%';
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', $search)
                   ->orWhere('description', 'like', $search);
             });
         }
-        
-        $orders = $query->latest()->get();
+          // Obter os resultados (ordenação já aplicada por orderedByLatest)
+        $orders = $query->get();
         
         return view('service_orders.index', [
             'orders' => $orders,
@@ -162,17 +159,22 @@ class ServiceOrderController extends Controller
         ]);
         
         $originalStatus = $serviceOrder->status;
-        $serviceOrder->update($request->only(['title', 'description', 'status']));
-          if ($request->status === 'concluida' && $originalStatus !== 'concluida') {
+        $serviceOrder->update($request->only(['title', 'description', 'status']));          if ($request->status === 'concluida' && $originalStatus !== 'concluida') {
             $serviceOrder = $serviceOrder->fresh()->load(['client', 'technician']);
             
-            // Verificar se o evento já foi disparado para esta ordem
+            // Gera uma chave única para esta ordem de serviço
             $cacheKey = 'order_completed_event_' . $serviceOrder->id;
-            if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                event(new \App\Events\ServiceOrderCompleted($serviceOrder));
-                // Marcar como disparado (expira após 1 hora)
-                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 3600);
-            }
+            
+            // Verifica se o evento já foi disparado (usando remember para evitar race conditions)
+            $eventDispatched = \Illuminate\Support\Facades\Cache::remember(
+                $cacheKey, 
+                now()->addDays(1), 
+                function() use ($serviceOrder) {
+                    // Dispara o evento apenas na primeira vez
+                    event(new \App\Events\ServiceOrderCompleted($serviceOrder));
+                    return true;
+                }
+            );
         }
         
         return redirect()->route('service_orders.index')->with('success', 'Ordem de serviço atualizada!');

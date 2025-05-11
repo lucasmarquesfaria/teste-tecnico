@@ -24,6 +24,48 @@ Route::middleware('auth')->group(function () {
     Route::get('/ordens/{serviceOrder}/editar', [ServiceOrderController::class, 'edit'])->name('service_orders.edit');
     Route::put('/ordens/{serviceOrder}', [ServiceOrderController::class, 'update'])->name('service_orders.update');
     
+    // Rota para corrigir datas das ordens de serviço (apenas para técnicos)
+    Route::get('/corrigir-datas', function() {
+        if (auth()->user()->role !== 'technician') {
+            abort(403, 'Apenas técnicos podem acessar esta funcionalidade.');
+        }
+        
+        $orders = \App\Models\ServiceOrder::all()->sortByDesc('created_at');
+        
+        return view('service_orders.fix_dates', ['orders' => $orders]);
+    })->name('service_orders.fix_dates');
+    
+    // Rota para aplicar a correção das datas
+    Route::post('/corrigir-datas/aplicar', function() {
+        if (auth()->user()->role !== 'technician') {
+            abort(403, 'Apenas técnicos podem executar esta ação.');
+        }
+        
+        // Corrigir timestamps duplicados
+        $orders = \App\Models\ServiceOrder::all()->sortByDesc('id');
+        
+        // Certifique-se de que as datas são únicas e ordenadas corretamente
+        $count = 0;
+        $lastDate = null;
+        
+        foreach ($orders as $order) {
+            if ($lastDate === null) {
+                $lastDate = now();
+            } else {
+                $lastDate = $lastDate->subSeconds(10); // Diferença de 10 segundos entre cada ordem
+            }
+            
+            $order->created_at = $lastDate;
+            $order->updated_at = $lastDate;
+            $order->save();
+            $count++;
+        }
+        
+        return redirect()
+            ->route('service_orders.index')
+            ->with('success', "Ordenação corrigida com sucesso! Foram atualizadas $count ordens de serviço.");
+    })->name('service_orders.apply_fix');
+    
     Route::get('/', function() {
         return redirect()->route('dashboard');
     })->middleware('auth');

@@ -1,226 +1,134 @@
-# Sistema de Gerenciamento de Ordens de Serviço
+# Sistema de Gerenciamento de Ordens de Serviço 🛠️
 
 ![Laravel](https://img.shields.io/badge/Laravel-10.x-red)
 ![PHPUnit](https://img.shields.io/badge/PHPUnit-10.x-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## Sumário
+## O que é este projeto? 💡
 
-1. [Sobre o Projeto](#sobre-o-projeto)
-2. [Recursos](#recursos)
-3. [Requisitos do Sistema](#requisitos-do-sistema)
-4. [Instalação](#instalação)
-5. [Configuração](#configuração)
-6. [Uso do Sistema](#uso-do-sistema)
-7. [Executando os Testes](#executando-os-testes)
-8. [Estrutura do Projeto](#estrutura-do-projeto)
-9. [Eventos e Notificações](#eventos-e-notificações)
-10. [Filas e Jobs](#filas-e-jobs)
-11. [Contribuindo](#contribuindo)
-12. [Licença](#licença)
+Este é um sistema simples e eficiente que permite técnicos e clientes gerenciarem ordens de serviço. Quando um técnico conclui um serviço, o cliente recebe automaticamente um e-mail informando sobre a conclusão.
 
-## Sobre o Projeto
+### Principais funcionalidades
 
-Este sistema de gerenciamento de ordens de serviço foi desenvolvido utilizando Laravel, permitindo que técnicos e clientes gerenciem solicitações de serviços. O sistema implementa um fluxo completo desde a criação até a conclusão de ordens de serviço (OS), com notificações automáticas via e-mail quando um serviço é concluído.
+✅ Técnicos podem criar e gerenciar ordens de serviço  
+✅ Clientes podem acompanhar suas ordens  
+✅ Notificações automáticas por e-mail quando serviços são concluídos  
+✅ Interface amigável e responsiva  
+✅ Sistema de filas para processamento eficiente de e-mails
 
-A aplicação utiliza:
-- Laravel para o backend e frontend
-- Blade como template engine
-- MySQL/SQLite como banco de dados
-- Sistema de autenticação nativo do Laravel
-- Eventos e Listeners para gerenciar notificações
-- Filas para processamento assíncrono de e-mails
-- PHPUnit para testes automatizados
+## Como começar 🚀
 
-## Recursos
+### O que você vai precisar
 
-- **Autenticação**: Login e registro para técnicos e clientes
-- **Gerenciamento de OS**:
-  - Criação de novas ordens de serviço (por técnicos)
-  - Visualização de OS (por clientes e técnicos associados)
-  - Atualização de status (pendente, em andamento, concluída)
-  - Histórico de alterações
-- **Notificações**: E-mails automáticos quando uma OS é concluída
-- **Dashboard**: Visão geral das ordens de serviço
-- **Filtros**: Busca por status, data e termos no título/descrição
-- **Controle de Acesso**: Políticas de autorização baseadas em perfis
+* PHP 8.1 ou superior
+* Composer
+* MySQL ou SQLite
+* Extensões básicas do PHP (PDO, Mbstring, etc)
 
-## Requisitos do Sistema
+### Instalação em 4 passos
 
-- PHP 8.1 ou superior
-- Composer
-- MySQL 5.7+ ou SQLite 3
-- Extensões PHP: PDO, Mbstring, Tokenizer, XML, Ctype, JSON
-- Node.js e NPM (opcional, para compilação de assets)
+1. **Clone o repositório e instale as dependências**
+   ```bash
+   git clone https://github.com/lucasmarquesfaria/teste-tecnico
+   cd teste-tecnico
+   composer install
+   ```
 
-## Instalação
+2. **Configure o ambiente**
+   ```bash
+   # Crie o arquivo .env
+   copy .env.example .env
+   
+   # Gere a chave da aplicação
+   php artisan key:generate
+   ```
 
-### Clone o repositório
+3. **Configure o banco de dados no arquivo .env**
+   ```
+   # Para MySQL
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_DATABASE=sistema_os
+   DB_USERNAME=root
+   DB_PASSWORD=sua_senha
+   
+   # OU para SQLite (mais simples para testes)
+   DB_CONNECTION=sqlite
+   # Crie o arquivo database/database.sqlite
+   ```
 
-```bash
-git clone https://github.com/seu-usuario/sistema-ordens-servico.git
-cd sistema-ordens-servico
-```
+4. **Execute as migrações e seeders**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
 
-### Instale as dependências PHP
+## Como usar o sistema 🖥️
 
-```bash
-composer install
-```
+1. **Inicie o servidor**
+   ```bash
+   php artisan serve
+   ```
 
-### Configure o ambiente
+2. **Inicie o processador de filas** (para envio de e-mails)
+   ```bash
+   php artisan queue:work
+   ```
 
-```bash
-# Copie o arquivo de exemplo de ambiente
-copy .env.example .env
+3. **Acesse o sistema**: http://localhost:8000
 
-# Gere a chave de aplicação
-php artisan key:generate
-```
+### Usuários para teste
 
-### Configure o banco de dados
-
-Edite o arquivo `.env` com suas configurações de banco de dados:
-
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=sistema_os
-DB_USERNAME=root
-DB_PASSWORD=sua_senha
-```
-
-Alternativamente, para usar SQLite:
-
-```
-DB_CONNECTION=sqlite
-# Certifique-se de criar o arquivo database/database.sqlite
-```
-
-### Execute as migrações e seeders
-
-```bash
-# Crie as tabelas no banco de dados
-php artisan migrate
-
-# Popule o banco com dados iniciais
-php artisan db:seed
-```
-
-## Configuração
-
-### Configuração de E-mail
-
-Para envio de notificações, configure o arquivo `.env` com suas credenciais de e-mail:
-
-```
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.seu-provedor.com
-MAIL_PORT=587
-MAIL_USERNAME=seu-email@exemplo.com
-MAIL_PASSWORD=sua_senha
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=seu-email@exemplo.com
-MAIL_FROM_NAME="${APP_NAME}"
-```
-
-Para ambiente de desenvolvimento, você pode usar o Mailtrap ou o driver `log`:
-
-```
-MAIL_MAILER=log
-```
-
-### Configuração de Filas
-
-Configure o sistema de filas no arquivo `.env`:
-
-```
-QUEUE_CONNECTION=database
-```
-
-## Uso do Sistema
-
-### Iniciar o servidor local
-
-```bash
-php artisan serve
-```
-
-Acesse o sistema em: http://localhost:8000
-
-### Processamento de filas (para e-mails)
-
-```bash
-# Para executar o worker de filas
-php artisan queue:work
-
-# Para monitorar jobs na fila
-php artisan app:debug-queue-jobs
-
-# Para monitorar jobs na fila
-php artisan app:debug-queue-jobs
-```
-
-### Usuários padrão
-
-O sistema inclui usuários pré-configurados para teste:
-
-**Técnico:**
-- Email: tecnico@exemplo.com
+👨‍💼 **Técnico**
+- Email: tecnico@exemplo.com 
 - Senha: password
 
-**Cliente:**
+👩‍💻 **Cliente**
 - Email: cliente@exemplo.com
 - Senha: password
 
-## Executando os Testes
+### Fluxo básico de uso
 
-O sistema possui testes unitários e de integração. Para executá-los:
+1. Faça login como técnico
+2. Crie uma nova ordem de serviço para um cliente
+3. Atualize o status da OS para "concluída" quando o serviço estiver pronto
+4. O sistema enviará automaticamente um e-mail para o cliente informando sobre a conclusão
 
-### Windows (PowerShell)
-
-```powershell
-.\run-tests.ps1
-```
-
-### Windows (CMD)
-
-```cmd
-.\run-tests.bat
-```
-
-### Linux/macOS
+## Executando os testes ⚙️
 
 ```bash
+# Windows
+.\run-tests.bat
+
+# Linux/macOS
 php artisan test
 ```
 
-Para mais detalhes sobre os testes, consulte o arquivo [TESTING.md](TESTING.md).
+## Como funciona por dentro? 🧩
 
-## Estrutura do Projeto
+O sistema utiliza:
+- Eventos e listeners do Laravel para disparar notificações
+- Sistema de filas para processamento assíncrono de e-mails
+- Cache para evitar envio duplicado de notificações
+- Políticas de acesso para controlar permissões
 
-```
-app/
-├── Console/Commands/         # Comandos personalizados do Artisan
-├── Events/                   # Eventos da aplicação
-│   └── ServiceOrderCompleted.php  # Evento disparado ao concluir uma OS
-├── Http/Controllers/         # Controladores da aplicação
-│   └── ServiceOrderController.php # Gerencia as ordens de serviço
-├── Listeners/                # Ouvintes de eventos
-│   └── NotifyClientOfCompletion.php # Envia notificações ao cliente
-├── Mail/                     # Classes de e-mail
-│   └── ServiceOrderCompletedMail.php # E-mail de OS concluída
-├── Models/                   # Modelos do Eloquent
-│   ├── ServiceOrder.php      # Modelo de ordem de serviço
-│   └── User.php              # Modelo de usuário
-├── Notifications/            # Notificações
-│   └── ServiceOrderCompletedNotification.php # Notificação de OS concluída
-├── Policies/                 # Políticas de autorização
-│   └── ServiceOrderPolicy.php # Regras de acesso para ordens de serviço
-└── Providers/                # Provedores de serviço
-    └── EventServiceProvider.php # Registro de events e listeners
-```
+### Estrutura simplificada
+- **Controllers**: Gerenciam requisições e respostas
+- **Models**: Representam as entidades do sistema (Usuários, Ordens de serviço)
+- **Events & Listeners**: Cuidam da notificação quando uma OS é concluída
+- **Policies**: Controlam quem pode fazer o quê no sistema
+
+## Precisa de ajuda? 🆘
+
+Para mais detalhes sobre os testes e funcionamento técnico, consulte o arquivo [TESTING.md](TESTING.md).
+
+## Licença 📄
+
+Este projeto está licenciado sob a [Licença MIT](https://opensource.org/licenses/MIT).
+
+---
+
+Feito com ❤️ usando Laravel
 
 ## Eventos e Notificações
 

@@ -14,6 +14,9 @@ return new class extends Migration {
             $table->foreignId('client_id')->constrained('users')->onUpdate('cascade')->onDelete('restrict');
             $table->foreignId('technician_id')->constrained('users')->onUpdate('cascade')->onDelete('restrict');
             $table->timestamps();
+            
+            // Adicionar índice para ordenação por data de criação
+            $table->index('created_at');
         });
     }
 

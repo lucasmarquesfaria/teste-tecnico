@@ -86,7 +86,7 @@
                                                 {{ ucfirst(str_replace('_', ' ', $order->status)) }}
                                             </span>
                                         </td>
-                                        <td class="px-4 py-2">{{ $order->created_at->format('d/m/Y') }}</td>
+                                        <td class="px-4 py-2">{{ $order->formatted_created_at }}</td>
                                         <td class="px-4 py-2">
                                             <a href="{{ route('service_orders.show', $order) }}" class="text-blue-700 hover:underline">
                                                 <i class="fas fa-eye mr-1"></i> Ver

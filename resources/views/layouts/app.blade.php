@@ -24,10 +24,12 @@
                     </a>
                     <a href="{{ route('service_orders.index') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-clipboard-list mr-1"></i> Ordens de Serviço
-                    </a>
-                    @if(auth()->user()->role === 'technician')
+                    </a>                    @if(auth()->user()->role === 'technician')
                     <a href="{{ route('service_orders.create') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-plus-circle mr-1"></i> Nova OS
+                    </a>
+                    <a href="{{ route('service_orders.fix_dates') }}" class="hover:text-blue-200 transition">
+                        <i class="fas fa-wrench mr-1"></i> Corrigir Datas
                     </a>
                     @endif
                 </div>
