@@ -1,13 +1,5 @@
 # Sistema de Gerenciamento de Ordens de Serviço 🛠️
 
-![Laravel](https://img.shields.io/badge/Laravel-10.x-red)
-![PHPUnit](https://img.shields.io/badge/PHPUnit-10.x-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-## O que é este projeto? 💡
-
-Este é um sistema simples e eficiente que permite técnicos e clientes gerenciarem ordens de serviço. Quando um técnico conclui um serviço, o cliente recebe automaticamente um e-mail informando sobre a conclusão.
-
 ### Principais funcionalidades
 
 ✅ Técnicos podem criar e gerenciar ordens de serviço  
@@ -118,18 +110,6 @@ O sistema utiliza:
 - **Events & Listeners**: Cuidam da notificação quando uma OS é concluída
 - **Policies**: Controlam quem pode fazer o quê no sistema
 
-## Precisa de ajuda? 🆘
-
-Para mais detalhes sobre os testes e funcionamento técnico, consulte o arquivo [TESTING.md](TESTING.md).
-
-## Licença 📄
-
-Este projeto está licenciado sob a [Licença MIT](https://opensource.org/licenses/MIT).
-
----
-
-Feito com ❤️ usando Laravel
-
 ## Eventos e Notificações
 
 O sistema utiliza o padrão Observer através de eventos e listeners para notificar os clientes:
@@ -162,36 +142,3 @@ As notificações são processadas através de filas para melhorar o desempenho:
 - As notificações implementam `ShouldQueue`
 - O sistema utiliza a fila `database` por padrão
 - Cada job tem configurado até 3 tentativas em caso de falha
-
-### Processamento de filas em produção
-
-Recomendação para ambientes de produção usando Supervisor:
-
-```
-[program:laravel-queue]
-process_name=%(program_name)s_%(process_num)02d
-command=php /caminho/para/projeto/artisan queue:work --sleep=3 --tries=3 --max-time=3600
-autostart=true
-autorestart=true
-stopasgroup=true
-killasgroup=true
-user=www-data
-numprocs=2
-redirect_stderr=true
-stdout_logfile=/caminho/para/projeto/storage/logs/worker.log
-stopwaitsecs=3600
-```
-
-## Contribuindo
-
-Contribuições são bem-vindas! Por favor, siga estes passos:
-
-1. Fork o repositório
-2. Crie um branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Faça commit das alterações (`git commit -m 'Adiciona nova funcionalidade'`)
-4. Envie para o branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
-
-## Licença
-
-Este projeto está licenciado sob a [Licença MIT](https://opensource.org/licenses/MIT) - veja o arquivo LICENSE para mais detalhes.
