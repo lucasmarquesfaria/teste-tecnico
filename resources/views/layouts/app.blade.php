@@ -22,9 +22,11 @@
                     <a href="{{ route('dashboard') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
                     </a>
+                    @if(auth()->user()->role === 'technician')
                     <a href="{{ route('analytics') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-chart-bar mr-1"></i> Analytics
                     </a>
+                    @endif
                     <a href="{{ route('service_orders.index') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-clipboard-list mr-1"></i> Ordens de Serviço
                     </a>                    @if(auth()->user()->role === 'technician')

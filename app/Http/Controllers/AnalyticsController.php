@@ -10,7 +10,17 @@ use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
-     */
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (Auth::user()->role !== 'technician') {
+                return redirect()->route('dashboard')
+                    ->with('error', 'Acesso restrito. Apenas a área técnica pode visualizar o dashboard analítico.');
+            }
+            return $next($request);
+        });
+    }
+     
     public function index()
     {
         try {
@@ -19,8 +29,7 @@ class AnalyticsController extends Controller
             $statusData = $this->getStatusChartData($user);
             $completionTimeData = $this->getCompletionTimeData($user);
             $ordersPerMonthData = $this->getOrdersPerMonthData($user);
-            $performanceData = $user->role === 'technician' ? 
-                $this->getTechnicianPerformanceData($user->id) : null;
+            $performanceData = $this->getTechnicianPerformanceData($user->id);
             $stats = $this->getGeneralStats($user);
               return view('analytics.index', [
                 'statusData' => json_encode($statusData),

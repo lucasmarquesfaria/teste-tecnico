@@ -54,7 +54,8 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">        <!-- Dashboard Analítico Card -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">        <!-- Dashboard Analítico Card - Apenas para técnicos -->
+        @if(auth()->user()->role === 'technician')
         <div class="md:col-span-3 mb-6">
             <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow p-5 text-white">
                 <div class="flex justify-between items-center">
@@ -71,6 +72,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="md:col-span-2">
             <div class="bg-white rounded-lg shadow p-5">
