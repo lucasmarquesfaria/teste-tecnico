@@ -17,9 +17,11 @@ Route::post('/usuarios', [UserController::class, 'store'])->name('users.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Rota para analytics usando verificação direta no controller
     Route::get('/analytics', [AnalyticsController::class, 'index'])
         ->name('analytics')
-        ->middleware('role:technician');
+        ->middleware([\App\Http\Middleware\CheckTechnician::class]);
     
     Route::get('/ordens', [ServiceOrderController::class, 'index'])->name('service_orders.index');
     Route::get('/ordens/criar', [ServiceOrderController::class, 'create'])->name('service_orders.create');
