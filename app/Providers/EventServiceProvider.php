@@ -19,6 +19,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         ServiceOrderCompleted::class => [
             NotifyClientOfCompletion::class,
+            // SendServiceOrderCompletedEmail::class, // NÃO USAR: evita envio duplicado
         ],
     ];
 

@@ -1,6 +1,9 @@
 <?php
 
 // Arquivo renomeado para NotifyClientOfCompletion.php
+// Arquivo desativado: toda a lógica de notificação está em NotifyClientOfCompletion.php
+// Esta classe não deve ser registrada no EventServiceProvider.
+// Para garantir que apenas o modelo customizado seja enviado, remova qualquer referência a este listener.
 
 namespace App\Listeners;
 
@@ -32,21 +35,8 @@ class SendServiceOrderCompletedEmail implements ShouldQueue
     /**
      * Handle the event.
      */
-    public function handle(ServiceOrderCompleted $event): void
-    {
-        $serviceOrder = $event->serviceOrder;
-        
-        // Carrega as relações necessárias caso não estejam
-        if (!$serviceOrder->relationLoaded('client')) {
-            $serviceOrder->load('client');
-        }
-        
-        if (!$serviceOrder->relationLoaded('technician')) {
-            $serviceOrder->load('technician');
-        }
-        
-        // Envia o e-mail para o cliente
-        Mail::to($serviceOrder->client->email)
-            ->send(new ServiceOrderCompletedMail($serviceOrder));
-    }
+    // public function handle(ServiceOrderCompleted $event): void
+    // {
+    //     // NÃO USAR: modelo de e-mail customizado está em NotifyClientOfCompletion
+    // }
 }
