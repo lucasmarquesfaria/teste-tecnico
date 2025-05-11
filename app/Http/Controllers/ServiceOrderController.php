@@ -6,10 +6,30 @@ use App\Models\ServiceOrder;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
+/**
+ * Controller para gerenciamento de Ordens de Serviço.
+ *
+ * Este controller gerencia todas as operações relacionadas às ordens de serviço,
+ * incluindo listagem, criação, visualização, edição e atualização.
+ * Também é responsável por disparar eventos quando uma ordem é concluída.
+ */
 class ServiceOrderController extends Controller
 {    
+    /**
+     * Exibe uma lista de ordens de serviço filtradas.
+     *
+     * Mostra apenas as ordens de serviço associadas ao usuário atual:
+     * - Para técnicos: ordens onde eles são os responsáveis
+     * - Para clientes: ordens onde eles são os clientes
+     *
+     * Permite filtrar por status, data e termos de busca.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -21,12 +41,10 @@ class ServiceOrderController extends Controller
             $query = ServiceOrder::where('client_id', $user->id)->with('technician');
         }
         
-        // Filtrar por status
         if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);     
         }
         
-        // Filtrar por data
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -35,7 +53,6 @@ class ServiceOrderController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
-        // Pesquisa por título ou descrição
         if ($request->has('search') && $request->search) {
             $search = '%' . $request->search . '%';
             $query->where(function($q) use ($search) {
@@ -52,27 +69,45 @@ class ServiceOrderController extends Controller
         ]);
     }
 
+    /**
+     * Exibe o formulário para criar uma nova ordem de serviço.
+     *
+     * Acessível apenas para usuários com função de técnico.
+     *
+     * @return \Illuminate\View\View
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function create()
     {
-        // RF02: Apenas técnicos podem criar OS
         if (auth()->user()->role !== 'technician') {
             abort(403, 'Apenas técnicos podem criar ordens de serviço.');
         }
         $clients = User::where('role', 'client')->get();
         return view('service_orders.create', compact('clients'));
-    }
-
+    }    
+    
+    /**
+     * Armazena uma nova ordem de serviço no banco de dados.
+     *
+     * Valida os dados da requisição e cria uma nova ordem com
+     * status inicial "pendente" e o técnico atual como responsável.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function store(Request $request)
     {
-        // RF02: Apenas técnicos podem criar OS
         if (auth()->user()->role !== 'technician') {
             abort(403, 'Apenas técnicos podem criar ordens de serviço.');
         }
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'client_id' => ['required', Rule::exists('users', 'id')->where('role', 'client')],
         ]);
+        
         $order = ServiceOrder::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -80,41 +115,80 @@ class ServiceOrderController extends Controller
             'client_id' => $request->client_id,
             'technician_id' => auth()->id(),
         ]);
+        
         return redirect()->route('service_orders.index')->with('success', 'Ordem de serviço criada com sucesso!');
     }
 
+    /**
+     * Exibe o formulário para editar uma ordem de serviço existente.
+     *
+     * Acessível apenas para o técnico responsável pela ordem.
+     *
+     * @param  \App\Models\ServiceOrder  $serviceOrder
+     * @return \Illuminate\View\View
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function edit(ServiceOrder $serviceOrder)
     {
-        // RF03: Apenas o técnico responsável pode editar
         if (auth()->user()->role !== 'technician' || auth()->id() !== $serviceOrder->technician_id) {
             abort(403, 'Apenas o técnico responsável pode editar esta ordem.');
         }
+        
         return view('service_orders.edit', compact('serviceOrder'));
     }
 
+    /**
+     * Atualiza uma ordem de serviço existente.
+     *
+     * Se a ordem for concluída (status alterado para "concluida"),
+     * dispara o evento ServiceOrderCompleted para notificar o cliente.
+     * Utiliza cache para evitar disparos duplicados do evento.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\ServiceOrder  $serviceOrder
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function update(Request $request, ServiceOrder $serviceOrder)
     {
-        // RF03: Apenas o técnico responsável pode atualizar
         if (auth()->user()->role !== 'technician' || auth()->id() !== $serviceOrder->technician_id) {
             abort(403, 'Apenas o técnico responsável pode atualizar esta ordem.');
         }
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'status' => ['required', Rule::in(['pendente', 'em_andamento', 'concluida'])],
         ]);
+        
         $originalStatus = $serviceOrder->status;
         $serviceOrder->update($request->only(['title', 'description', 'status']));
-        // RF04: Disparar evento se status mudou para concluída
-        if ($request->status === 'concluida' && $originalStatus !== 'concluida') {
-            event(new \App\Events\ServiceOrderCompleted($serviceOrder));
+          if ($request->status === 'concluida' && $originalStatus !== 'concluida') {
+            $serviceOrder = $serviceOrder->fresh()->load(['client', 'technician']);
+            
+            // Verificar se o evento já foi disparado para esta ordem
+            $cacheKey = 'order_completed_event_' . $serviceOrder->id;
+            if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                event(new \App\Events\ServiceOrderCompleted($serviceOrder));
+                // Marcar como disparado (expira após 1 hora)
+                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 3600);
+            }
         }
+        
         return redirect()->route('service_orders.index')->with('success', 'Ordem de serviço atualizada!');
     }
     
+    /**
+     * Exibe os detalhes de uma ordem de serviço específica.
+     *
+     * Acessível apenas para o técnico responsável ou o cliente associado.
+     *
+     * @param  \App\Models\ServiceOrder  $serviceOrder
+     * @return \Illuminate\View\View
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function show(ServiceOrder $serviceOrder)
     {
-        // RF: Garantir que apenas o técnico responsável ou o cliente possam visualizar
         $user = auth()->user();
         if (
             ($user->role === 'technician' && $serviceOrder->technician_id !== $user->id) ||
@@ -122,7 +196,7 @@ class ServiceOrderController extends Controller
         ) {
             abort(403, 'Você não tem permissão para visualizar esta ordem de serviço.');
         }
-        // Carrega os relacionamentos
+        
         $serviceOrder->load(['client', 'technician']);
         return view('service_orders.show', compact('serviceOrder'));
     }

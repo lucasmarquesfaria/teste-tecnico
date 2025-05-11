@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // Verifica se a tabela users já existe
         if (Schema::hasTable('users')) {
-            // Adiciona a coluna role se ela não existir
             Schema::table('users', function (Blueprint $table) {
                 if (!Schema::hasColumn('users', 'role')) {
                     $table->enum('role', ['client', 'technician'])->nullable();
@@ -27,7 +25,6 @@ return new class extends Migration {
     }
 
     public function down(): void {
-        // Não removemos a tabela, apenas a coluna se ela foi adicionada
         if (Schema::hasTable('users') && Schema::hasColumn('users', 'role')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->dropColumn('role');

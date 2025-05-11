@@ -157,9 +157,6 @@ php artisan queue:work
 
 # Para monitorar jobs na fila
 php artisan app:debug-queue-jobs
-
-# Para monitorar jobs na fila
-php artisan app:debug-queue-jobs
 ```
 
 ### Usuários padrão

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: #F6F0F0 !important; }
+        body { background:rgb(231, 231, 231) !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -54,11 +54,5 @@
     <main class="flex-grow">
         @yield('content')
     </main>
-    
-    <footer class="bg-gray-800 text-white text-center py-4 mt-10">
-        <div class="container mx-auto">
-            <p>&copy; {{ date('Y') }} Sistema de Gestão de Ordens de Serviço</p>
-        </div>
-    </footer>
 </body>
 </html>

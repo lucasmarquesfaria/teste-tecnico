@@ -2,9 +2,9 @@
 
 @section('content')
 <div class="container mx-auto max-w-lg py-10">
-    <h1 class="text-2xl font-bold mb-6">Editar Ordem de Serviço</h1>    <form method="POST" action="{{ route('service_orders.update.post', $serviceOrder) }}" class="space-y-5 bg-white shadow rounded-lg p-8">
+    <h1 class="text-2xl font-bold mb-6">Editar Ordem de Serviço</h1>    <form method="POST" action="{{ route('service_orders.update', $serviceOrder) }}" class="space-y-5 bg-white shadow rounded-lg p-8">
         @csrf
-        <!-- Não precisamos do _method já que estamos usando POST diretamente -->
+        @method('PUT')
         <div>
             <label for="title" class="block font-semibold">Título</label>
             <input type="text" name="title" id="title" value="{{ old('title', $serviceOrder->title) }}" class="w-full border rounded p-2 @error('title') border-red-500 @enderror" required>

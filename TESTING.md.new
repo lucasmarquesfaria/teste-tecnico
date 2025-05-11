@@ -173,7 +173,7 @@ Testa os controllers responsáveis pelas ordens:
 #### DebugQueueJobsCommandTest
 
 Testa o comando personalizado para visualização de jobs na fila:
-- Exibição correta quando não há jobs ("Nenhum job pendente na fila.")
+- Exibição correta quando não há jobs
 - Listagem e formatação dos jobs pendentes
 
 ## Factories para Testes
@@ -284,7 +284,7 @@ Além dos testes automatizados, é recomendável realizar os seguintes testes ma
 
 4. **Verificar Processamento da Notificação**
    - Execute: `php artisan app:debug-queue-jobs`
-   - Verifique se o job aparece na fila (ou "Nenhum job pendente na fila.")
+   - Verifique se o job aparece na fila
    - Execute: `php artisan queue:work`
    - Confirme que o e-mail foi enviado (verificando logs ou o serviço de e-mail configurado)
 
