@@ -3,54 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\ServiceOrder;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
-    /**
-     * Exibe o dashboard analítico com gráficos
-     *
-     * @return \Illuminate\View\View
      */
     public function index()
     {
-        $user = Auth::user();
-        $analytics = [];
-        
-        // Dados para o gráfico de status das ordens
-        $statusData = $this->getStatusChartData($user);
-        
-        // Dados para o gráfico de tempo médio de conclusão
-        $completionTimeData = $this->getCompletionTimeData($user);
-        
-        // Dados para o gráfico de ordens por mês
-        $ordersPerMonthData = $this->getOrdersPerMonthData($user);
-        
-        // Dados para o gráfico de desempenho (apenas para técnicos)
-        $performanceData = $user->role === 'technician' ? $this->getTechnicianPerformanceData($user->id) : null;
-        
-        // Estatísticas gerais
-        $stats = $this->getGeneralStats($user);
-        
-        return view('analytics.index', [
-            'statusData' => json_encode($statusData),
-            'completionTimeData' => json_encode($completionTimeData),
-            'ordersPerMonthData' => json_encode($ordersPerMonthData),
-            'performanceData' => $performanceData ? json_encode($performanceData) : null,
-            'stats' => $stats
-        ]);
+        try {
+            $user = Auth::user();
+            
+            $statusData = $this->getStatusChartData($user);
+            $completionTimeData = $this->getCompletionTimeData($user);
+            $ordersPerMonthData = $this->getOrdersPerMonthData($user);
+            $performanceData = $user->role === 'technician' ? 
+                $this->getTechnicianPerformanceData($user->id) : null;
+            $stats = $this->getGeneralStats($user);
+              return view('analytics.index', [
+                'statusData' => json_encode($statusData),
+                'completionTimeData' => json_encode($completionTimeData),
+                'ordersPerMonthData' => json_encode($ordersPerMonthData),
+                'performanceData' => $performanceData ? json_encode($performanceData) : null,
+                'stats' => $stats
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Erro ao gerar dashboard analítico: ' . $e->getMessage());
+            
+            return view('analytics.index', [
+                'error' => 'Ocorreu um erro ao processar os dados analíticos. Por favor, tente novamente mais tarde.'
+            ]);
+        }
     }
-    
-    /**
-     * Obtém dados para o gráfico de status das ordens
-     *
-     * @param \App\Models\User $user
-     * @return array
-     */
-    private function getStatusChartData($user)
+      private function getStatusChartData($user)
     {
         $query = ServiceOrder::query();
         
@@ -64,8 +51,6 @@ class AnalyticsController extends Controller
                             ->groupBy('status')
                             ->pluck('total', 'status')
                             ->toArray();
-        
-        // Garantir que todos os status estejam presentes
         $statuses = ['pendente', 'em_andamento', 'concluida'];
         $labels = ['Pendente', 'Em Andamento', 'Concluída'];
         $colors = ['#9CA3AF', '#FBBF24', '#10B981'];
@@ -87,8 +72,7 @@ class AnalyticsController extends Controller
      *
      * @param \App\Models\User $user
      * @return array
-     */
-    private function getCompletionTimeData($user)
+     */    private function getCompletionTimeData($user)
     {
         $query = ServiceOrder::where('status', 'concluida');
         
@@ -97,49 +81,40 @@ class AnalyticsController extends Controller
         } else {
             $query->where('client_id', $user->id);
         }
+          $stats = $query->select([
+            DB::raw('COUNT(*) as count'),
+            DB::raw('AVG(TIMESTAMPDIFF(DAY, created_at, updated_at)) as avg_time'),
+            DB::raw('MIN(TIMESTAMPDIFF(DAY, created_at, updated_at)) as min_time'),
+            DB::raw('MAX(TIMESTAMPDIFF(DAY, created_at, updated_at)) as max_time')
+        ])->first();
         
-        // Calcular o tempo médio (em dias) entre a criação e a última atualização para ordens concluídas
-        $orders = $query->get();
-        $completionTimes = [];
-        
-        foreach ($orders as $order) {
-            $created = Carbon::parse($order->created_at);
-            $updated = Carbon::parse($order->updated_at);
-            $diffInDays = $created->diffInDays($updated);
-            $completionTimes[] = $diffInDays;
-        }
-        
-        // Se não houver dados, retornar um array vazio
-        if (empty($completionTimes)) {
+        if (!$stats || $stats->count == 0) {
             return [];
         }
         
-        // Calcular estatísticas básicas
-        $avgCompletionTime = array_sum($completionTimes) / count($completionTimes);
-        $minCompletionTime = min($completionTimes);
-        $maxCompletionTime = max($completionTimes);
-        
         return [
-            'avg' => round($avgCompletionTime, 1),
-            'min' => $minCompletionTime,
-            'max' => $maxCompletionTime,
-            'count' => count($completionTimes)
+            'avg' => round($stats->avg_time, 1),
+            'min' => (int)$stats->min_time,
+            'max' => (int)$stats->max_time,
+            'count' => $stats->count
         ];
     }
-    
-    /**
-     * Obtém dados para o gráfico de ordens por mês
-     *
-     * @param \App\Models\User $user
-     * @return array
-     */
-    private function getOrdersPerMonthData($user)
+      private function getOrdersPerMonthData($user)
     {
+        $months = [
+            'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+            'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+        ];
+        
+        // Inicializar array com zeros para todos os meses
+        $monthCounts = array_fill(0, 12, 0);
+        
+        // Construir a query para obter os dados do banco
         $query = ServiceOrder::select(
                 DB::raw('MONTH(created_at) as month'),
-                DB::raw('YEAR(created_at) as year'),
                 DB::raw('COUNT(*) as count')
-            );
+            )
+            ->whereYear('created_at', date('Y'));
             
         if ($user->role === 'technician') {
             $query->where('technician_id', $user->id);
@@ -147,75 +122,56 @@ class AnalyticsController extends Controller
             $query->where('client_id', $user->id);
         }
         
-        $results = $query->whereYear('created_at', date('Y'))
-                ->groupBy('year', 'month')
-                ->orderBy('year')
+        $results = $query->groupBy('month')
                 ->orderBy('month')
                 ->get();
                 
-        $months = [
-            'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-            'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-        ];
-        
-        $data = [
-            'labels' => [],
-            'data' => array_fill(0, 12, 0)
-        ];
-        
+        // Preencher os dados com os resultados da consulta
         foreach ($results as $result) {
-            // Mês é baseado em 1, então subtraímos 1 para corresponder ao índice
+            // Mês é baseado em 1, então subtraímos 1 para corresponder ao índice do array (0-11)
             $monthIndex = $result->month - 1;
-            $data['data'][$monthIndex] = $result->count;
+            $monthCounts[$monthIndex] = (int)$result->count;
         }
         
-        $data['labels'] = $months;
-        
-        return $data;
+        return [
+            'labels' => $months,
+            'data' => $monthCounts
+        ];
     }
-    
-    /**
-     * Obtém dados de desempenho para técnicos
-     *
-     * @param int $technicianId
-     * @return array|null
-     */
-    private function getTechnicianPerformanceData($technicianId)
+      private function getTechnicianPerformanceData($technicianId)
     {
-        // Obter tempo médio de conclusão por semana das últimas 8 semanas
-        $startDate = Carbon::now()->subWeeks(8)->startOfWeek();
-        
-        $weeklyData = ServiceOrder::where('technician_id', $technicianId)
-            ->where('status', 'concluida')
-            ->where('updated_at', '>=', $startDate)
-            ->select(
-                DB::raw('YEARWEEK(updated_at) as yearweek'),
-                DB::raw('COUNT(*) as completed_count'),
-                DB::raw('AVG(TIMESTAMPDIFF(DAY, created_at, updated_at)) as avg_completion_time')
-            )
-            ->groupBy('yearweek')
-            ->orderBy('yearweek')
-            ->get();
-        
-        if ($weeklyData->isEmpty()) {
-            return null;
-        }
-        
         $labels = [];
         $completionData = [];
         $countData = [];
-        
-        // Preencher com as últimas 8 semanas
-        $currentWeek = Carbon::now()->startOfWeek();
+
         for ($i = 8; $i >= 1; $i--) {
-            $weekStart = Carbon::now()->subWeeks($i)->startOfWeek()->format('d/m');
-            $labels[] = "Semana $weekStart";
-            $yearweek = Carbon::now()->subWeeks($i)->startOfWeek()->format('YW');
+            $weekStart = Carbon::now()->subWeeks($i)->startOfWeek();
+            $weekEnd = Carbon::now()->subWeeks($i)->endOfWeek();
+            $labels[] = "Semana " . $weekStart->format('d/m');
+            $weekStats = ServiceOrder::where('technician_id', $technicianId)
+                ->where('status', 'concluida')
+                ->whereBetween('updated_at', [$weekStart, $weekEnd])
+                ->select([
+                    DB::raw('COUNT(*) as completed_count'),
+                    DB::raw('AVG(TIMESTAMPDIFF(DAY, created_at, updated_at)) as avg_completion_time')
+                ])
+                ->first();
             
-            $weekRecord = $weeklyData->firstWhere('yearweek', $yearweek);
-            
-            $completionData[] = $weekRecord ? round($weekRecord->avg_completion_time, 1) : 0;
-            $countData[] = $weekRecord ? $weekRecord->completed_count : 0;
+            $completionData[] = $weekStats->avg_completion_time ? round($weekStats->avg_completion_time, 1) : 0;
+            $countData[] = $weekStats->completed_count ?: 0;
+        }
+        
+        // Verificar se há pelo menos alguns dados válidos
+        $hasData = false;
+        foreach ($countData as $count) {
+            if ($count > 0) {
+                $hasData = true;
+                break;
+            }
+        }
+        
+        if (!$hasData) {
+            return null;
         }
         
         return [
@@ -224,14 +180,7 @@ class AnalyticsController extends Controller
             'completed_count' => $countData
         ];
     }
-    
-    /**
-     * Obtém estatísticas gerais
-     *
-     * @param \App\Models\User $user
-     * @return array
-     */
-    private function getGeneralStats($user)
+      private function getGeneralStats($user)
     {
         $query = ServiceOrder::query();
         
@@ -248,13 +197,11 @@ class AnalyticsController extends Controller
         
         $completionRate = $total > 0 ? round(($completed / $total) * 100, 1) : 0;
         
-        // Média de ordens por mês
         $oldestOrder = ServiceOrder::orderBy('created_at', 'asc')->first();
-        $monthsActive = 1; // Mínimo de 1 mês
-        
-        if ($oldestOrder) {
+        $monthsActive = 1;
+          if ($oldestOrder) {
             $firstDate = Carbon::parse($oldestOrder->created_at);
-            $monthsActive = $firstDate->diffInMonths(Carbon::now()) + 1; // +1 para incluir o mês atual
+            $monthsActive = $firstDate->diffInMonths(Carbon::now()) + 1;
             if ($monthsActive < 1) {
                 $monthsActive = 1;
             }
@@ -262,7 +209,6 @@ class AnalyticsController extends Controller
         
         $avgOrdersPerMonth = $total > 0 ? round($total / $monthsActive, 1) : 0;
         
-        // Crescimento do último mês
         $lastMonthQuery = clone $query;
         $ordersLastMonth = $lastMonthQuery->whereMonth('created_at', Carbon::now()->subMonth()->month)
             ->whereYear('created_at', Carbon::now()->subMonth()->year)
