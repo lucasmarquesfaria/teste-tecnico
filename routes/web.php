@@ -5,6 +5,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ServiceOrderController;
+use App\Http\Controllers\AnalyticsController;
 
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
@@ -16,6 +17,7 @@ Route::post('/usuarios', [UserController::class, 'store'])->name('users.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
     
     Route::get('/ordens', [ServiceOrderController::class, 'index'])->name('service_orders.index');
     Route::get('/ordens/criar', [ServiceOrderController::class, 'create'])->name('service_orders.create');

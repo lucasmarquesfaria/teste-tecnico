@@ -22,6 +22,9 @@
                     <a href="{{ route('dashboard') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
                     </a>
+                    <a href="{{ route('analytics') }}" class="hover:text-blue-200 transition">
+                        <i class="fas fa-chart-bar mr-1"></i> Analytics
+                    </a>
                     <a href="{{ route('service_orders.index') }}" class="hover:text-blue-200 transition">
                         <i class="fas fa-clipboard-list mr-1"></i> Ordens de Serviço
                     </a>                    @if(auth()->user()->role === 'technician')
@@ -51,10 +54,11 @@
             </div>
         </nav>
     </header>
-    @endauth
-
-    <main class="flex-grow">
+    @endauth    <main class="flex-grow">
         @yield('content')
     </main>
+
+    <!-- Scripts -->
+    @yield('scripts')
 </body>
 </html>

@@ -54,7 +54,24 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">        <!-- Dashboard Analítico Card -->
+        <div class="md:col-span-3 mb-6">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow p-5 text-white">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold mb-2">Dashboard Analítico</h2>
+                        <p class="text-blue-100 mb-4">Visualize estatísticas detalhadas e gráficos das suas ordens de serviço</p>
+                        <a href="{{ route('analytics') }}" class="bg-white text-blue-600 hover:bg-blue-100 font-bold py-2 px-4 rounded inline-flex items-center">
+                            <i class="fas fa-chart-bar mr-2"></i> Ver Analytics
+                        </a>
+                    </div>
+                    <div class="hidden md:block">
+                        <i class="fas fa-chart-line text-6xl opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="md:col-span-2">
             <div class="bg-white rounded-lg shadow p-5">
                 <h2 class="text-xl font-bold mb-4">Ordens Recentes</h2>
