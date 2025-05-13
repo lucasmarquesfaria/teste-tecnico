@@ -74,6 +74,26 @@
         </div>
         @endif
 
+        @if(auth()->user()->role === 'technician')
+        <div class="md:col-span-3 mb-6">
+            <div class="bg-gradient-to-r from-green-500 to-blue-600 rounded-lg shadow-lg p-7 text-white flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-2xl font-extrabold mb-2 flex items-center">
+                        <i class="fas fa-file-alt mr-3 text-3xl"></i> Relatórios de Ordens de Serviço
+                    </h2>
+                    <p class="text-blue-100 mb-4 max-w-lg">Gere relatórios profissionais em PDF ou Excel das suas ordens de serviço, filtrando por período, status e técnico. Ideal para prestação de contas, auditoria e acompanhamento de resultados.</p>
+                    <a href="{{ route('reports.form') }}" class="inline-flex items-center bg-white text-green-700 hover:bg-green-100 font-bold py-2 px-6 rounded shadow transition-all duration-200">
+                        <i class="fas fa-file-download mr-2"></i> Gerar Relatório
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-file-excel text-7xl opacity-60 mr-4"></i>
+                    <i class="fas fa-file-pdf text-7xl opacity-60"></i>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="md:col-span-2">
             <div class="bg-white rounded-lg shadow p-5">
                 <h2 class="text-xl font-bold mb-4">Ordens Recentes</h2>

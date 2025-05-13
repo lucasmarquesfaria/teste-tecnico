@@ -72,6 +72,11 @@ Route::middleware('auth')->group(function () {
             ->with('success', "Ordenação corrigida com sucesso! Foram atualizadas $count ordens de serviço.");
     })->name('service_orders.apply_fix');
     
+    // Relatórios de OS
+    Route::get('/relatorios', [App\Http\Controllers\ReportController::class, 'form'])->name('reports.form');
+    Route::post('/relatorios/pdf', [App\Http\Controllers\ReportController::class, 'generatePdf'])->name('reports.pdf');
+    Route::post('/relatorios/excel', [App\Http\Controllers\ReportController::class, 'generateExcel'])->name('reports.excel');
+
     Route::get('/', function() {
         return redirect()->route('dashboard');
     })->middleware('auth');

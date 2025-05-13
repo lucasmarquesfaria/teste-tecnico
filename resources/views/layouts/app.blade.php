@@ -12,51 +12,58 @@
 </head>
 <body class="min-h-screen flex flex-col">
     @auth
-    <header class="bg-blue-800 text-white shadow-md">
-        <nav class="container mx-auto py-3 px-4 flex justify-between items-center">
-            <div class="flex items-center space-x-8">
-                <div class="font-bold text-lg">
-                    <i class="fas fa-tools mr-2"></i>
-                    <span>Sistema de OS</span>
-                </div>                <div class="hidden md:flex space-x-6">
-                    <a href="{{ route('dashboard') }}" class="hover:text-blue-200 transition">
+    <header class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 text-white shadow-lg">
+        <nav class="container mx-auto py-3 px-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-8 w-full md:w-auto mb-2 md:mb-0">
+                <div class="font-extrabold text-2xl tracking-tight flex items-center">
+                    <i class="fas fa-tools mr-2 text-yellow-400 text-3xl"></i>
+                    <span class="drop-shadow-lg">Sistema de <span class="text-yellow-300">OS</span></span>
+                </div>
+                <div class="hidden md:flex space-x-6 ml-8">
+                    <a href="{{ route('dashboard') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
                     </a>
                     @if(auth()->user()->role === 'technician')
-                    <a href="{{ route('analytics') }}" class="hover:text-blue-200 transition">
+                    <a href="{{ route('analytics') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-chart-bar mr-1"></i> Analytics
                     </a>
+                    <a href="{{ route('reports.form') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
+                        <i class="fas fa-file-alt mr-1"></i> Relatórios
+                    </a>
                     @endif
-                    <a href="{{ route('service_orders.index') }}" class="hover:text-blue-200 transition">
+                    <a href="{{ route('service_orders.index') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-clipboard-list mr-1"></i> Ordens de Serviço
-                    </a>                    @if(auth()->user()->role === 'technician')
-                    <a href="{{ route('service_orders.create') }}" class="hover:text-blue-200 transition">
+                    </a>
+                    @if(auth()->user()->role === 'technician')
+                    <a href="{{ route('service_orders.create') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-plus-circle mr-1"></i> Nova OS
                     </a>
-                    <a href="{{ route('service_orders.fix_dates') }}" class="hover:text-blue-200 transition">
+                    <a href="{{ route('service_orders.fix_dates') }}" class="hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-wrench mr-1"></i> Corrigir Datas
                     </a>
                     @endif
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-sm">
+            <div class="flex items-center space-x-4 w-full md:w-auto justify-end">
+                <div class="text-sm text-right">
                     <span class="hidden md:inline mr-2">Olá,</span>
-                    <span class="font-semibold">{{ auth()->user()->name }}</span>
-                    <span class="ml-2 px-2 py-1 bg-blue-900 rounded-full text-xs">
+                    <span class="font-bold text-lg">{{ auth()->user()->name }}</span>
+                    <span class="ml-2 px-2 py-1 bg-yellow-400 text-blue-900 rounded-full text-xs font-bold shadow">
                         {{ auth()->user()->role === 'technician' ? 'Técnico' : 'Cliente' }}
                     </span>
-                </div>                <form method="POST" action="{{ route('logout') }}" class="inline">
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
-                    <button type="submit" class="text-white hover:text-blue-200">
+                    <button type="submit" class="text-white hover:text-yellow-300 font-semibold transition flex items-center">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span class="hidden md:inline">Sair</span>
+                        <span class="hidden md:inline ml-1">Sair</span>
                     </button>
                 </form>
             </div>
         </nav>
     </header>
-    @endauth    <main class="flex-grow">
+    @endauth
+    <main class="flex-grow">
         @yield('content')
     </main>
 
