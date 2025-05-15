@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $stats = [];
-          if ($user->role === 'technician') {
+        if ($user->role === 'technician') {
             // Estatísticas para técnicos
             $stats['total'] = ServiceOrder::where('technician_id', $user->id)->count();
             $stats['pending'] = ServiceOrder::where('technician_id', $user->id)
@@ -21,7 +21,13 @@ class DashboardController extends Controller
             $stats['in_progress'] = ServiceOrder::where('technician_id', $user->id)
                 ->where('status', 'em_andamento')->count();
             $stats['completed'] = ServiceOrder::where('technician_id', $user->id)
-                ->where('status', 'concluida')->count();            // Clientes recentes atendidos pelo técnico
+                ->where('status', 'concluida')->count();
+            $stats['late'] = ServiceOrder::where('technician_id', $user->id)
+                ->whereIn('status', ['pendente', 'em_andamento'])
+                ->whereNotNull('sla_due_at')
+                ->where('sla_due_at', '<', now())
+                ->count();
+            // Clientes recentes atendidos pelo técnico
             $recentClients = ServiceOrder::orderedByLatest()
                 ->where('technician_id', $user->id)
                 ->with('client')
@@ -43,7 +49,14 @@ class DashboardController extends Controller
                 ->where('status', 'pendente')->count();
             $stats['in_progress'] = ServiceOrder::where('client_id', $user->id)
                 ->where('status', 'em_andamento')->count();
-            $stats['completed'] = ServiceOrder::where('client_id', $user->id)                ->where('status', 'concluida')->count();            // Técnicos que atenderam o cliente
+            $stats['completed'] = ServiceOrder::where('client_id', $user->id)
+                ->where('status', 'concluida')->count();
+            $stats['late'] = ServiceOrder::where('client_id', $user->id)
+                ->whereIn('status', ['pendente', 'em_andamento'])
+                ->whereNotNull('sla_due_at')
+                ->where('sla_due_at', '<', now())
+                ->count();
+            // Técnicos que atenderam o cliente
             $technicians = ServiceOrder::orderedByLatest()
                 ->where('client_id', $user->id)
                 ->with('technician')

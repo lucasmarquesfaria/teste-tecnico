@@ -52,6 +52,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-red-100 rounded-lg shadow p-5">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-red-600 text-sm font-semibold flex items-center gap-1">
+                        <i class="fas fa-exclamation-triangle"></i> Atrasadas
+                    </p>
+                    <h3 class="text-2xl font-bold text-red-700">{{ $stats['late'] }}</h3>
+                </div>
+                <div class="bg-red-200 p-3 rounded-full">
+                    <i class="fas fa-exclamation-circle text-red-600 text-xl animate-pulse"></i>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">        <!-- Dashboard Analítico Card - Apenas para técnicos -->

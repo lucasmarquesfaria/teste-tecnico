@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 /**
  * Controller para gerenciamento de Ordens de Serviço.
@@ -59,10 +60,22 @@ class ServiceOrderController extends Controller
         }
           // Obter os resultados (ordenação já aplicada por orderedByLatest)
         $orders = $query->get();
+
+        // Alerta visual para técnicos sobre OSs atrasadas
+        $alertAtrasadas = null;
+        if (auth()->user()->role === 'technician') {
+            $qAtrasadas = $orders->filter(function($order) {
+                return $order->sla_due_at && $order->status !== 'concluida' && \Carbon\Carbon::parse($order->sla_due_at)->isPast();
+            });
+            if ($qAtrasadas->count() > 0) {
+                $alertAtrasadas = 'Atenção: Existem ' . $qAtrasadas->count() . ' ordem(ns) de serviço atrasada(s)!';
+            }
+        }
         
         return view('service_orders.index', [
             'orders' => $orders,
             'filters' => $request->only(['status', 'date_from', 'date_to', 'search']),
+            'alertAtrasadas' => $alertAtrasadas,
         ]);
     }
 
@@ -105,12 +118,14 @@ class ServiceOrderController extends Controller
             'client_id' => ['required', Rule::exists('users', 'id')->where('role', 'client')],
         ]);
         
+        $slaPrazoDias = 3; // Valor padrão, pode ser configurável depois
         $order = ServiceOrder::create([
             'title' => $request->title,
             'description' => $request->description,
             'status' => 'pendente',
             'client_id' => $request->client_id,
             'technician_id' => auth()->id(),
+            'sla_due_at' => Carbon::now()->addDays($slaPrazoDias),
         ]);
         
         return redirect()->route('service_orders.index')->with('success', 'Ordem de serviço criada com sucesso!');
